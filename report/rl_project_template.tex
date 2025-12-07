@@ -37,14 +37,12 @@
 % author name.
 
 \author{
-  David Hood, Fiora MacPherson, Loving-Grace Mawire, Vanisha Oree
+  David Hood, Vanisha Oree
   \\
   Department of Computer Science\\
   University of Bath\\
   Bath, BA2 7AY \\
   \texttt{dh2155@bath.ac.uk} \\
-  \texttt{fm683@bath.ac.uk} \\
-  \texttt{lgrm21@bath.ac.uk} \\
   \texttt{vo256@bath.ac.uk} \\
   %% examples of more authors
   %% \And
@@ -75,11 +73,16 @@
 
 \section{Problem Definition}
 % A clear, precise and concise description of your chosen problem, including the states, actions, transition dynamics, and the reward function. You will lose marks for an unclear, incorrect, or incomplete problem definition. You should also discuss the difficulty of your chosen problem and justify why it cannot be solved effectively using tabular reinforcement learning methods.
+The problem is learning to play the Atari game \textbf{Pong} using \textbf{reinforcement learning}. Pong is a two-player zero sum game where each player controls a vertical paddle and attempts to return a moving ball past the opponent. A point gets scored when the opponent fails to return the ball. The aim of the agent is to \textbf{maximize the cumulative reward over an episode by learning how to control the paddle optimally}.
 
-Hello how are you?
+This problem is formulated as a \textbf{Markov Decision Process} defined by the tuple \((\mathcal{S}, \mathcal{A}, \mathcal{P}, \mathcal{R}, \gamma)\), where where \(\mathcal{S}\) is the state space, \(\mathcal{A}\) is the action space, \(\mathcal{P}\) is the transition dynamics, \(\mathcal{R}\) is the reward function, and \(\gamma\) is the discount factor.
+
+
+
 
 \section{Background}
 % A discussion of reinforcement learning methods that may be effective at solving your chosen problem, their strengths and weaknesses for your chosen problem, and any existing results in the scientific literature (or publicly available online) on your chosen problem or similar problems.
+We chose to implement the Deep Q-Learning learning approach for an agent to learn 
 
 \section{Method}
 % A description of the method(s) used to solve your chosen problem, an explanation of how these methods work (in your own words), and an explanation of why you chose these specific methods.
