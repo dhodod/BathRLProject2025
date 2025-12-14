@@ -75,10 +75,10 @@
 
 \section{Problem Definition}
 % A clear, precise and concise description of your chosen problem, including the states, actions, transition dynamics, and the reward function. You will lose marks for an unclear, incorrect, or incomplete problem definition. You should also discuss the difficulty of your chosen problem and justify why it cannot be solved effectively using tabular reinforcement learning methods.
-The problem is learning to play the Atari game \textbf{Pong} using \textbf{reinforcement learning}. Pong is a two-player zero sum game where each player controls a vertical paddle and attempts to return a moving ball past the opponent. A point gets scored when the opponent fails to return the ball. The aim of the agent is to \textbf{maximize the cumulative reward over an episode by learning how to control the paddle optimally}.
+The problem is learning to play the Atari game \textbf{Pong} using reinforcement learning. Pong is a two-player zero sum game where each player controls a vertical paddle and attempts to return a moving ball past the opponent. A point gets scored when the opponent fails to return the ball. The aim of the agent is to maximize the cumulative reward over an episode by learning how to control the paddle optimally.
 
 This problem is formulated as a \textbf{Markov Decision Process} defined by the tuple \((\mathcal{S}, \mathcal{A}, \mathcal{P}, \mathcal{R}, \gamma)\), where where \(\mathcal{S}\) is the state space, \(\mathcal{A}\) is the action space, \(\mathcal{P}\) is the transition dynamics, \(\mathcal{R}\) is the reward function, and \(\gamma\) is the discount factor.
-
+% overview of state space, action and transition dynamics 
 \subsection{State Space}
 The state at time step \(t\), denoted \(s_t \in \mathcal{S}\), is constructed from the last four consecutive preprocessed game frames. Each frame is:
 
@@ -95,7 +95,43 @@ s_t = (x_{t-3}, x_{t-2}, x_{t-1}, x_t)
 where each \(x_t \in \mathbb{R}^{84 \times 84}\). 
 The full state therefore has shape \textbf{(4, 84, 84)}.
 % explain the four frames stacking
-The concept behind stacking four frames is to provide the agent with \textbf{temporal information}, allowing it to infer 
+The concept behind stacking four frames is to provide the agent with \textbf{temporal information}, allowing it to infer ball velocity and direction, which cannot be determined from a single static frame. 
+
+\subsection{Action Space}
+The action space \(\mathcal{A}\) is discrete and consists of the legal paddle movements available to the agent in Pong. These actions include:
+
+\begin{itemize}
+    \item No operation (do nothing)
+    \item Move paddle up
+    \item Move paddle down
+\end{itemize}
+
+At each time step, the agent selects one action \(a_t \in \mathcal{A}\), which is applied for several internal frames due to frame skipping.
+
+\subsection{Transition Dynamics}
+The transition dynamics \(\mathcal{P}(s_{t+1} | s_t, a_t)\) are governed by the \textbf{deterministic physics of the Atari game engine} combined with the opponent’s policy. The agent does not control the opponent paddle, which behaves according to a built-in strategy.
+
+Due to unknown opponent behaviour, partial observability from individual frames, and frame skipping, the exact transition probabilities are unknown and cannot be modelled explicitly.
+
+\subsection{Reward Function}
+The reward function \(\mathcal{R}(s_t, a_t)\) is defined as:
+\begin{itemize}
+    \item \textbf{+1} when the agent scores a point
+    \item  \textbf{-1} when the opponent scores a point
+    \item \textbf{0} otherwise
+\end{itemize}
+
+An episode ends when one player reaches a terminal score. 
+The goal of the agent is to maximize the total reward (per episode), which corresponds to winning the match. 
+
+\subsection{Problem Difficulty}
+Pong is a high-dimensional, continuous visual control task with the following challenges:
+
+\begin{enumerate}
+    \item High Dimensional State Space: Each state consists of over 28000 pixels (4 $\times$ 84 $\times$ 84).
+    \item 
+\end{enumerate}
+
 
 \section{Background}
 % A discussion of reinforcement learning methods that may be effective at solving your chosen problem, their strengths and weaknesses for your chosen problem, and any existing results in the scientific literature (or publicly available online) on your chosen problem or similar problems.
@@ -127,19 +163,31 @@ We chose to implement the Deep Q-Learning learning approach for an agent to lear
 \end{table}
 
 \section{Discussion}
-% An evaluation of how well you solved your chosen problem.
-DH
+% An evaluation of how well you solved your chosen problem. (DH)
+
+We tried a number of tweaks to hyper parameters:
+\begin{itemize}
+    \item Introducing the AdamW optimiser in place of the Adam optimiser seemed to make little difference to the learning rate. We believe this is because the weight decay term would shrink rewards making the learning less sensitive to them.
+    \item Replay Buffer Size 100,000, 1,000,000
+    \item Batch size of 32, 64 and 128
+    \item Learning rate of 1e-3, 1e-4 and 1e-5 
+    \item Huber loss vs MSE
+    \item Epsilon decay 150,000, 500,000
+    \item Gamma of 0.99 and 0.999
+    \item Target update frequency 1,000 and 10,000
+
+\end{itemize}
 
 \section{Future Work}
-% A discussion of potential future work you would complete if you had more time.
-We would have welcomed more time to explore other approaches to reinforcement learning and applying them to a broader set of games. 
+% A discussion of potential future work you would complete if you had more time. (DH)
+We would have welcomed more time to explore other approaches to reinforcement learning and applying them to a broader set of Atari games. 
 
-to learning to play Atari games using reinforcement learning. 
+One of the startling results from the Mnih et al, 2015 paper was the generality of the approach which allowed the same algorithm to be applied to many different games. Pong is one of the simpler games in the Arcade Learning Environment but still requires considerable computational resources to learn which makes evaluating different approaches time consuming. The next step would be to verify the agent when playing more challenging games such as Breakout. Breakout requires many more episodes of training before the agent can acquire superhuman levels of play. 
 
-Long term games/goals e.g. Montezuma's revenge
+Beyond that, games such as Montezuma's Revenge are hard exploration problems that require longer term planning because of the large number of actions require before being rewarded (sparse rewards), or where it is difficult for the agent to understand which of many actions taken were most crucial to obtaining the reward (the credit-assignment problem). Games such as this would have offered the chance to explore more complex models such as Random Network Distillation (RND) as described in OpenAI, 2018. 
 
 \section{Personal Experience}
-% A discussion of your personal experience with the project, such as difficulties or pleasant surprises you encountered while completing it.
+% A discussion of your personal experience with the project, such as difficulties or pleasant surprises you encountered while completing it. (DH)
 It was fascinating to see an agent develop the necessary skill to play a game from raw (albeit simplified) footage from the game environment. After \textbf{[X]} thousand steps, the agent would even win the occasional game. 
 
 We developed the agent using TensorFlow and Keras which were very helpful libraries for building core DQN algorithm and neural network. Training on a CPU was slow however and, recognising that improved performance would enable us to investigate more approaches for learning, significant time was spent trying to improve performance. 
@@ -148,14 +196,7 @@ Simple profiling of the code showed that generating, preprocessing and storing e
 
 Here we encountered some frustration.  When trying Keras on a local Nvidia GPU on Microsoft Windows (which required Windows Subsystem for Linux 2) where the model would not learn. Similar challenges were found in Google Colab and Mac OS. 
 
-Beyond these experiments tried a number of tweaks to hyper parameters which appeared to have little or negative impact:
-\begin{itemize}
-    \item Introducing the AdamW optimiser seemed to make little difference to the learning rate \textbf{[WHY?]}
-    \item Batch size of 64 and 128
-    \item Learning rate of 1e-3, 1e-4 and 1e-5 
-    \item Gamma of 0.99 and 0.999
-    \item Target update frequency 1,000 and 10,000
-\end{itemize}
+\textbf{[Time spent tuning hyper parameters]}
 
 Working as a group was a positive experience overall although our group of four became a group of \textbf{[X]} because one member had to drop out of the course due to personal and work commitments. The remaining group was able to coordinate tasks efficiently and develop the project further.  
 
@@ -163,7 +204,10 @@ Overall, we think it would have been better to have established a stable group e
 
 \section*{References}
 % 
-Mnih, V., Kavukcuoglu, K., Silver, D., Rusu, A.A., Veness, J., Bellemare, M.G., Graves, A., Riedmiller, M., Fidjeland, A.K., Ostrovski, G. and Petersen, S., 2015. Human-level control through deep reinforcement learning. Nature, 518(7540), pp.529-533
+Mnih, V., Kavukcuoglu, K., Silver, D., Rusu, A.A., Veness, J., Bellemare, M.G., Graves, A., Riedmiller, M., Fidjeland, A.K., Ostrovski, G. and Petersen, S., 2015. \textit{Human-level control through deep reinforcement learning}. Nature, 518(7540), pp.529-533
+
+OpenAI, 2018 \textit{Reinforcement learning with prediction-based rewards}. 31 October. Available at: https://openai.com/index/reinforcement-learning-with-prediction-based-rewards/ (Accessed: 14 December 2025). 
+
 
 \small
 
