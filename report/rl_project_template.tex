@@ -21,6 +21,7 @@
 \usepackage{graphicx}
 \usepackage{tikz}
 \usepackage{float}
+\usepackage{amsmath}
 \usetikzlibrary{arrows.meta, positioning}
 
 % Give your project report an appropriate title!
@@ -76,7 +77,7 @@
 
 \section{Problem Definition}
 % A clear, precise and concise description of your chosen problem, including the states, actions, transition dynamics, and the reward function. You will lose marks for an unclear, incorrect, or incomplete problem definition. You should also discuss the difficulty of your chosen problem and justify why it cannot be solved effectively using tabular reinforcement learning methods.
-The problem is learning to play the Atari game \textbf{Pong} using reinforcement learning. Pong is a two-player zero sum game where each player controls a vertical paddle and attempts to return a moving ball past the opponent. A point gets scored when the opponent fails to return the ball. The aim of the agent is to maximize the cumulative reward over an episode by learning how to control the paddle optimally.
+Our chosen problem is learning to play the Atari game \textbf{Pong} using reinforcement learning. Pong is a two-player zero sum game where each player controls a vertical paddle and attempts to return a moving ball past the opponent. A point gets scored when the opponent fails to return the ball. The aim of the agent is to maximize the cumulative reward over an episode by learning how to control the paddle optimally.
 
 This problem is formulated as a \textbf{Markov Decision Process} defined by the tuple \((\mathcal{S}, \mathcal{A}, \mathcal{P}, \mathcal{R}, \gamma)\), where where \(\mathcal{S}\) is the state space, \(\mathcal{A}\) is the action space, \(\mathcal{P}\) is the transition dynamics, \(\mathcal{R}\) is the reward function, and \(\gamma\) is the discount factor.
 % overview of state space, action and transition dynamics 
@@ -94,17 +95,20 @@ Thus, we can represent the state as:
 s_t = (x_{t-3}, x_{t-2}, x_{t-1}, x_t)
 \]
 where each \(x_t \in \mathbb{R}^{84 \times 84}\). 
-The full state therefore has shape \textbf{(4, 84, 84)}.
+The full state therefore has shape \textbf{(84, 84, 4)}.
 % explain the four frames stacking
 The concept behind stacking four frames is to provide the agent with \textbf{temporal information}, allowing it to infer ball velocity and direction, which cannot be determined from a single static frame. 
 
 \subsection{Action Space}
-The action space \(\mathcal{A}\) is discrete and consists of the legal paddle movements available to the agent in Pong. These actions include:
+The action space \(\mathcal{A}\) is discrete and consists of the legal paddle movements available to the agent in Pong. These six actions in this game are:
 
 \begin{itemize}
     \item No operation (do nothing)
     \item Move paddle up
     \item Move paddle down
+    \item Fire
+    \item Paddle up + Fire
+    \item Paddle down + Fire
 \end{itemize}
 
 At each time step, the agent selects one action \(a_t \in \mathcal{A}\), which is applied for several internal frames due to frame skipping.
@@ -129,8 +133,8 @@ The goal of the agent is to maximize the total reward (per episode), which corre
 Pong is a high-dimensional, continuous visual control task with the following challenges:
 
 \begin{enumerate}
-    \item High Dimensional State Space: Each state consists of over 28000 pixels (4 $\times$ 84 $\times$ 84).
-    \item Observability: A single frame does not have information about motion.
+    \item High Dimensional State Space: Each state consists of over 28,000 pixels (84 $\times$ 84 $\times$ 4).
+    \item Observability: A single frame does not have information about motion (although a stacked set of frames does convey motion).
     \item Non-Stationarity: The opponent and ball dynamics are continuously changing.
     \item Delayed rewards: Learning is difficult given actions that                           influence success or failure receive feedback many steps later, preventing          the agent from associating individual actions with their outcomes.
     \item Ambiguous feedback: Actions taken early in a Pong rally affect the outcome          much later, requiring the agent to correctly attribute sparse and delayed           rewards to distant decisions.
@@ -138,18 +142,72 @@ Pong is a high-dimensional, continuous visual control task with the following ch
 
 \subsection{Why Tabular Reinforcement Learning is not feasible}
 
+Tabular reinforcement learning methods such as standard Q-learning require storing a value for every state--action pair. However, in Pong, the state space derived from raw pixel observations is both continuous and extremely high dimensional. Each frame contains thousands of pixel values, and the agent must also infer motion from multiple consecutive frames. Attempting to treat each possible pixel configuration as a distinct state would be infeasible. Even if the image were discretised coarsely, the number of resulting state configurations would still be astronomically large.
 
+Furthermore, successful control requires the agent to generalise across visually similar states (for example, slightly different ball positions or paddle offsets) rather than storing separate values for every possible configuration. Tabular reinforcement learning methods cannot provide this generalisation and would require a Q-table far too large to construct or learn efficiently.
 
+To overcome these limitations, the agent must use a function approximator that can map high-dimensional visual inputs to action values. A Deep Q-Network (DQN) based on convolutional neural networks is therefore employed to approximate the optimal action-value function:
+\[
+Q(s, a; \theta)
+\]
+This approach enables learning directly from raw pixels by exploiting spatial and temporal regularities in the observations, allowing the agent to scale to the large state space.
 
 
 \section{Background}
 % A discussion of reinforcement learning methods that may be effective at solving your chosen problem, their strengths and weaknesses for your chosen problem, and any existing results in the scientific literature (or publicly available online) on your chosen problem or similar problems. (LGM)
-We chose to implement the Deep Q-Learning learning approach for an agent to learn 
+
+\subsection{Foundations of Reinforcement Learning}
+Reinforcement Learning (RL) is a framework in which agents learn to make decisions through interaction with an environment. The agent observes its current situation, selects an action, receives a reward, and transitions to a new situation. Over time, it learns to maximise the cumulative reward it receives. Most RL problems are formalised using the framework of a Markov Decision Process (MDP) (Sutton and Barto, 2018). An MDP defines the environment in terms of a set of states, a set of available actions, a reward function, a transition function, and a discount factor. The Markov property assumes that the next state and reward depend only on the current state and action, not on the full history of past interactions.
+
+In RL, the agent’s goal is to learn a policy, a mapping from states to actions, that maximises expected long-term reward. 
+
+\subsection{Types of Reinforcement Learning Methods}
+There are several classes of RL algorithms. Model-free methods learn from experience without building an explicit model of the environment's dynamics. In contrast, model-based methods aim to learn a predictive model of the environment, which can be used for planning and decision-making (Huang, 2020).
+
+Within the model-free category, two major subtypes are value-based and policy-based methods. Value-based methods focus on estimating the value of taking a particular action in a particular state. One of the best-known examples is Q-learning, where the agent learns an action-value function that approximates the expected return for each state-action pair. Policy-based methods, on the other hand, aim to learn the policy directly. These approaches are particularly effective in continuous action spaces or where stochastic policies are beneficial. However, they often exhibit higher variance and can require careful tuning of hyperparameters (Greensmith et al., 2004). 
+
+Policy gradient methods, such as REINFORCE or Proximal Policy Optimisation (PPO), directly optimise the policy rather than estimating value functions. These methods are advantageous in environments with continuous or high-dimensional action spaces and can represent stochastic policies. However, they are generally more sensitive to hyperparameter choices and can suffer from high variance in the gradient estimates. While PPO includes mechanisms to reduce this variance, it still requires careful tuning and may be less efficient in environments with discrete actions such as Pong (Papini et al., 2018).
+
+Model-based reinforcement learning is another alternative. These methods attempt to learn a model of the environment's dynamics, which can be used to simulate experiences and improve sample efficiency. In theory, model-based methods require fewer real interactions with the environment. However, learning accurate models from high-dimensional visual data is extremely challenging (Moerland et al., 2020). In practice, errors in the learned model can lead to poor generalisation and suboptimal behaviour. Recent work in world models and latent-space planning has made progress, but model-free approaches such as DQN remain more robust and reliable in visual domains like Pong (Ha and Schmidhuber, 2018).
+
+\subsection{Deep Q-Learning and Visual Environments}
+Q-learning in its tabular form performs well in small environments with discrete, low-dimensional state spaces. However, in environments with large or continuous state spaces, such as those involving visual inputs from games, it becomes infeasible to maintain a Q-table (Adhikari and Ren, 2021). This limitation led to the development of function-approximated methods, particularly those using deep neural networks.
+
+The Deep Q-Network (DQN) algorithm (Mnih et al., 2015) represents a significant advance in this area. DQN approximates the Q-value function using a convolutional neural network (CNN), allowing it to learn directly from raw pixel input. This made it possible to apply reinforcement learning successfully to high-dimensional, visual domains such as Atari games. The agent receives a stack of consecutive frames as input and outputs a Q-value for each possible action. Over time, it learns to associate visual patterns with successful strategies.
+
+To stabilise training, DQN introduces two core innovations. The first is experience replay, which stores past transitions and samples them randomly during training. This reduces the correlation between training samples and improves sample efficiency. The second is the use of a target network, which is updated less frequently than the main network. This helps to reduce instability by decoupling the network used to estimate the Q-value target from the one being updated.
+
+\subsection{Application to Pong and Relevant Enhancements}
+DQN is particularly well-suited to our problem, which involves learning to play the game Pong from pixel inputs. Pong presents a challenging environment with sparse rewards, temporal dependencies, and a discrete action space. DQN has been shown to perform well in such conditions, achieving superhuman performance in the original DeepMind experiments (Mnih et al., 2015). The convolutional architecture is well-matched to the image-based state representation, while the use of experience replay allows the agent to learn efficiently from limited reward signals.
+
+Despite its strengths, DQN is not without limitations. It has been shown to suffer from overestimation bias, where Q-values are systematically overestimated due to the use of the max operator in the Bellman update. To address this, Double DQN was proposed, which separates the selection and evaluation of actions to reduce this bias (Hasselt, Guez and Silver, 2016). Another improvement is Dueling DQN, which decomposes the Q-value into two streams: one estimating the value of being in a state, and the other estimating the advantage of each action. This helps the agent learn more efficiently in environments where many actions have similar outcomes. Additionally, Prioritised Experience Replay has been introduced to sample more informative transitions more frequently, improving convergence speed (Schaul et al., 2016; Huang, Wei and Wang, 2018).
+
+While these extensions offer measurable improvements, our project focuses on implementing and analysing the baseline DQN algorithm. The decision to use DQN is motivated by its proven success in learning from pixels in environments with discrete actions and sparse rewards. The game Pong has become a standard benchmark in the Arcade Learning Environment (ALE) and continues to be widely used in academic and applied research to evaluate reinforcement learning algorithms. Numerous replications and open-source implementations of DQN have demonstrated its effectiveness in this domain.
 
 
 \section{Method}
 % A description of the method(s) used to solve your chosen problem, an explanation of how these methods work (in your own words), and an explanation of why you chose these specific methods.
- % process workflow:
+ % process workflow: Appendix A - Figure 2
+
+We use the Deep Q-Network (DQN) algorithm to train an agent to play Atari Pong directly from sequences of pixel observations. DQN extends Q-Learning by using a neural network to approximate the action-value function for high-dimensional states, and incorporates experience replay and target networks to stabilise temporal-difference learning. A full processing pipeline - from pixel input to replay storage and gradient descent - is provided in Figure 2 in Appendix A. 
+
+ \subsection{Pre-processing and State Representation}
+ 
+The environment observations are pre-processed using Gymnasium's \texttt{AtariPreprocessing} wrapper. This wrapper automatically converts incoming RGB frames to grayscales and resizes them to 84x84 pixels. It repeats the chosen action for several frames through frame-skipping and performs a random number of no-op actions at episode start. These operations reduce computational cost, increase temporal regularity in the input stream and remove unnecessary visual details. After preprocessing, four consecutive frames are stacked (using the \texttt{FrameStackObservation} and \texttt{ChannelsLast} wrapper) to form the current state  \(s_t \), enabling the agent to infer motion information parameters such as ball direction and velocity.
+
+\subsection{Action Selection}
+The stacked state is an input to a neural network parameterised by $\theta$, which outputs a Q-value estimate for each discete action. An $\epsilon$-greedy policy chooses between exploration and exploitation, with probability $\epsilon$ a random action is selected, otherwise the action with maximum Q-value is selected with probability $1-\epsilon$:
+\[
+a_t \sim
+\begin{cases}
+\text{Uniform}(\mathcal{A}), & \text{with probability } \epsilon, \\[6pt]
+\arg\max_{a} Q(s_t, a;\theta), & \text{with probability } 1 - \epsilon.
+\end{cases}
+\]
+This provides a gradual shift from random behaviour to learned control. 
+
+\subsection{Experience Replay}
+After the action is taken, the agent receives a reward and the next frame. The transition tuple $(s_t, a_t, r_t, s_{t+1}, \text{done})$ is appended to a replay buffer. During training batches, mini-batches of transitions are sampled uniform
 
 
 
@@ -157,28 +215,48 @@ We chose to implement the Deep Q-Learning learning approach for an agent to lear
 % A presentation of your results, showing how quickly and how well your agent(s) learn (i.e., improve their policies). Include informative baselines for comparison (e.g. the best possible performance, the performance of an average human, or the performance of an agent that selects actions randomly). (DH)
 
 
-\textbf{Results table here:}
+Our agent managed an average score of $4.4$ with a standard deviation of $\pm7.2$ based on 36 samples (the minimum to converge to the normal under the central limit theorem). The is better then Best Linear Learning and Contigency (SARSA) algorithms reported in Mnih 2015 but below that of an experienced human and well below the DQN approach in the paper.
 
-\begin{table}[!htbp]
+\begin{center}
+\begin{tabular}{lr}
+\hline
+\textbf{Agent}      & \textbf{Score}\\ 
+\hline
+Random Play         & -20.7      \\
+\hline
+Best Linear Learning& -19        \\
+\hline
+Contingency (SARSA) & -17.4      \\
+\hline
+Human               & 9.3        \\
+\hline
+DeepMind DQN ($\pm$)  & 19.9 (1.3) \\
+\hline
+\textbf{Our DQN ($\pm$)}       & \textbf{4.4 (7.2)}\\
+\hline
+\end{tabular}
+\end{center}
+
+
+
+
+
+At first we thought that the agent might just need to train longer however, we noted that beyond a certain number of episodes, the performance could deteriorate. The figure below shows a training run of 4 million steps. Learning improves until shortly after one million steps, the model starts to "unlearn".
+\begin{center}
     \centering
-    \begin{tabular}{ccccccc}
-         \textbf{Game}&  \textbf{Random}&  \textbf{Best Linear}&  \textbf{Contingency} &  
-         \textbf{Human}&  \textbf{DeepMind} & \textbf{Our DQN}\\ 
-         & \textbf{Play}& \textbf{Learning}&  \textbf{(SARSA)}& & \textbf{DQN (+/- std)}&\\
-         Pong&  -20.7&  -19&  -17.4&  9.3&  19.9 (+/-1.3)& \\
-    \end{tabular}
-    \caption{(excerpt from Minh, 2015)}
-    \label{tab:results}
-\end{table}
+    \includegraphics[width=0.7\linewidth]{image.png}
+    \label{fig:figure1}
+\end{center}
 
 \section{Discussion}
 % An evaluation of how well you solved your chosen problem. (DH)
+We were hoping that our agent would obtain above human levels of skill and possibly match the results in Mnih, 2015
 
 We tried a number of tweaks to hyper parameters:
 \begin{itemize}
     \item Introducing the AdamW optimiser in place of the Adam optimiser seemed to make little difference to the learning rate. We believe this is because the weight decay term would shrink rewards making the learning less sensitive to them.
     \item Replay Buffer Size 100,000, 1,000,000
-    \item Batch size of 32, 64 and 128
+    \item Batch sizes higher than 32 slowed the system down with no appreciable benefit to learning. [WHY?]
     \item Learning rate of 1e-3, 1e-4 and 1e-5 
     \item Huber loss vs MSE
     \item Epsilon decay 150,000, 500,000
@@ -189,9 +267,9 @@ We tried a number of tweaks to hyper parameters:
 
 \section{Future Work}
 % A discussion of potential future work you would complete if you had more time. (DH)
-We would have welcomed more time to explore other approaches to reinforcement learning and applying them to a broader set of Atari games. 
+We would have welcomed more time to explore other approaches to reinforcement learning and apply them to a broader set of Atari games. Implementing more sophisticated algorithms such as Double or Dueling DQN or adding Prioritised Experience Replay would be logical next steps. 
 
-One of the startling results from the Mnih et al, 2015 paper was the generality of the approach which allowed the same algorithm to be applied to many different games. Pong is one of the simpler games in the Arcade Learning Environment but still requires considerable computational resources to learn which makes evaluating different approaches time consuming. The next step would be to verify the agent when playing more challenging games such as Breakout. Breakout requires many more episodes of training before the agent can acquire superhuman levels of play. 
+One of the startling results from the Mnih et al, 2015 paper was the generality of the approach which allowed the same algorithm to be applied to many different games. Pong is one of the simpler games in the Arcade Learning Environment but still requires considerable computational resources to train which makes evaluating different approaches time consuming. Applying the agent to more challenging games such as Breakout would be interesting. Breakout requires many more episodes of training before the agent can acquire superhuman levels of play. 
 
 Beyond that, games such as Montezuma's Revenge are hard exploration problems that require longer term planning because of the large number of actions require before being rewarded (sparse rewards), or where it is difficult for the agent to understand which of many actions taken were most crucial to obtaining the reward (the credit-assignment problem). Games such as this would have offered the chance to explore more complex models such as Random Network Distillation (RND) as described in OpenAI, 2018. 
 
@@ -205,7 +283,7 @@ Simple profiling of the code showed that generating, preprocessing and storing e
 
 Here we encountered some frustration.  When trying Keras on a local Nvidia GPU on Microsoft Windows (which required Windows Subsystem for Linux 2) where the model would not learn. Similar challenges were found in Google Colab and Mac OS. 
 
-\textbf{[Time spent tuning hyper parameters]}
+A significant amount of time was also spent trying many combinations of hyperparameters in the hope of matching the performance of the DeepMind paper. \textbf{[WHY DID THE BEST RESULTS FOR US ARISE FROM DIFFERENT FIGURES TO THE DEEPMIND PAPER?]}
 
 Working as a group was a positive experience overall although our group of four became a group of \textbf{[X]} because one member had to drop out of the course due to personal and work commitments. The remaining group was able to coordinate tasks efficiently and develop the project further.  
 
@@ -213,9 +291,29 @@ Overall, we think it would have been better to have established a stable group e
 
 \section*{References}
 % 
-Mnih, V., Kavukcuoglu, K., Silver, D., Rusu, A.A., Veness, J., Bellemare, M.G., Graves, A., Riedmiller, M., Fidjeland, A.K., Ostrovski, G. and Petersen, S., 2015. \textit{Human-level control through deep reinforcement learning}. Nature, 518(7540), pp.529-533
+Adhikari, A. and Ren, Y. (2021). RL-PONG : Playing Pong from Pixels. [online] Available at: https://cse.sc.edu/\~aakriti/aakriti\_files/RL\_Pong\_Final.pdf.
+
+Greensmith, E., Bartlett, P., Edu, B. and Baxter, J. (2004). Variance Reduction Techniques for Gradient Estimates in Reinforcement Learning. Journal of Machine Learning Research, [online] 5, pp.1471–1530. Available at: https://www.jmlr.org/papers/volume5/greensmith04a/greensmith04a.pdf.
+
+Ha, D. and Schmidhuber, J. (2018). World Models. World Models, [online] 1(1), p.e10. doi:https://doi.org/10.5281/zenodo.1207631.
+
+Hasselt, H. van, Guez, A. and Silver, D. (2016). Deep Reinforcement Learning with Double Q-Learning. Proceedings of the AAAI Conference on Artificial Intelligence, [online] 30(1). Available at: https://ojs.aaai.org/index.php/AAAI/article/view/10295.
+
+Huang, Q. (2020). Model-Based or Model-Free, a Review of Approaches in Reinforcement Learning. IEEE Transactions on Industrial Informatics. [online] doi:https://doi.org/10.1109/cds49703.2020.00051.
+
+Huang, Y., Wei, G. and Wang, Y. (2018). V-D D3QN: the Variant of Double Deep Q-Learning Network with Dueling Architecture. 2018 37th Chinese Control Conference (CCC), [online] pp.9130–9135. doi:https://doi.org/10.23919/chicc.2018.8483478.
+
+Mnih, V., Kavukcuoglu, K., Silver, D., Rusu, A.A., Veness, J., Bellemare, M.G., Graves, A., Riedmiller, M., Fidjeland, A.K., Ostrovski, G., Petersen, S., Beattie, C., Sadik, A., Antonoglou, I., King, H., Kumaran, D., Wierstra, D., Legg, S. and Hassabis, D. (2015). Human-level Control through Deep Reinforcement Learning. Nature, [online] 518(7540), pp.529–533. doi:https://doi.org/10.1038/nature14236.
+
+Moerland, T.M., Broekens, J., Plaat, A. and Jonker, C.M. (2020). Model-based Reinforcement Learning: A Survey. arXiv:2006.16712 [cs, stat]. [online] Available at: https://arxiv.org/abs/2006.16712.
 
 OpenAI, 2018 \textit{Reinforcement learning with prediction-based rewards}. 31 October. Available at: https://openai.com/index/reinforcement-learning-with-prediction-based-rewards/ (Accessed: 14 December 2025). 
+
+Papini, M., Damiano Binaghi, Canonaco, G., Matteo Pirotta and Restelli, M. (2018). Stochastic Variance-Reduced Policy Gradient. PMLR, [online] pp.4026–4035. Available at: https://proceedings.mlr.press/v80/papini18a.html.
+
+Schaul, T., Quan, J., Antonoglou, I. and Silver, D. (2016). Prioritized Experience Replay. [online] arXiv.org. Available at: https://arxiv.org/abs/1511.05952.
+
+Sutton, R.S. and Barto, A. (2018). Reinforcement learning: An introduction. 2nd ed. Cambridge, Ma ; London: The Mit Press.
 
 
 \small
@@ -275,6 +373,10 @@ OpenAI, 2018 \textit{Reinforcement learning with prediction-based rewards}. 31 O
 \label{fig:dqn_pong_pipeline}
 \end{figure}
 
+\subsection{Appendix B}
+This pseudo-code describes the conceptual DQN algorithm implemented in the notebook. Low-level optimisations such as vectorised environments and replay memory internals are abstracted for clarity.
+
+[PLACE HERE ONCE MOST RECENT VERSION IS CONFIRMED]
 
 
 \end{document}
