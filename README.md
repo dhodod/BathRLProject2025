@@ -13,9 +13,9 @@
 ### Source code and ancillary files
 * README.md - This file.
 * RLProject2025_VO.ipynb - A Jupyter notebook with the source code. Uncomment the pip install commands in the first code block to install the necessary libraries. 
-* batchX_pong_dqn (n steps).keras - model checkpoints that save the state of the model after x steps
-* batch5_pong_episode_end_steps.npy - stored np.array for the x-axis of the learning visualisation 
-* batch5_pong_episode_rewards.npy - stored np.array for the y-axis of the learning visualisation 
+* batchX_pong_dqn (n steps).keras - model checkpoints that save the state of model X after n steps
+* batchX_pong_episode_end_steps.npy - stored np.array for the x-axis of the learning visualisation for model X after n steps
+* batchX_pong_episode_rewards.npy - stored np.array for the y-axis of the learning visualisation for model X after n steps
 
 ### Group Contribution Form.
 * Group Contribution Form Template.docx - completed contribution form
