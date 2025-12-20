@@ -19,3 +19,7 @@
 
 ### Group Contribution Form.
 * Group Contribution Form Template.docx - completed contribution form
+
+## We used the following libraries in this project
+* OpenAI Gym/Farama Gymnasium (https://pypi.org/project/ale-py/) - for the Atari game environment, pre-processing wrappers and rendering
+* TensorFlow/Keras (https://www.tensorflow.org/guide/keras) - for the DQN network, optimiser and training steps
