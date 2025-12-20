@@ -39,13 +39,14 @@
 % author name.
 
 \author{
-  David Hood, Vanisha Oree
+  David Hood, Vanisha Oree, Loving-Grace Mawire
   \\
   Department of Computer Science\\
   University of Bath\\
   Bath, BA2 7AY \\
   \texttt{dh2155@bath.ac.uk} \\
   \texttt{vo256@bath.ac.uk} \\
+  \texttt{lgrm21@bath.ac.uk}\\
   %% examples of more authors
   %% \And
   %% Coauthor \\
@@ -129,12 +130,20 @@ Pong is a high-dimensional, continuous visual control task with the following ch
 
 \begin{enumerate}
     \item High Dimensional State Space: Each state consists of over 28000 pixels (4 $\times$ 84 $\times$ 84).
-    \item 
+    \item Observability: A single frame does not have information about motion.
+    \item Non-Stationarity: The opponent and ball dynamics are continuously changing.
+    \item Delayed rewards: Learning is difficult given actions that                           influence success or failure receive feedback many steps later, preventing          the agent from associating individual actions with their outcomes.
+    \item Ambiguous feedback: Actions taken early in a Pong rally affect the outcome          much later, requiring the agent to correctly attribute sparse and delayed           rewards to distant decisions.
 \end{enumerate}
+
+\subsection{Why Tabular Reinforcement Learning is not feasible}
+
+
+
 
 
 \section{Background}
-% A discussion of reinforcement learning methods that may be effective at solving your chosen problem, their strengths and weaknesses for your chosen problem, and any existing results in the scientific literature (or publicly available online) on your chosen problem or similar problems.
+% A discussion of reinforcement learning methods that may be effective at solving your chosen problem, their strengths and weaknesses for your chosen problem, and any existing results in the scientific literature (or publicly available online) on your chosen problem or similar problems. (LGM)
 We chose to implement the Deep Q-Learning learning approach for an agent to learn 
 
 
@@ -145,7 +154,7 @@ We chose to implement the Deep Q-Learning learning approach for an agent to lear
 
 
 \section{Results}
-% A presentation of your results, showing how quickly and how well your agent(s) learn (i.e., improve their policies). Include informative baselines for comparison (e.g. the best possible performance, the performance of an average human, or the performance of an agent that selects actions randomly).
+% A presentation of your results, showing how quickly and how well your agent(s) learn (i.e., improve their policies). Include informative baselines for comparison (e.g. the best possible performance, the performance of an average human, or the performance of an agent that selects actions randomly). (DH)
 
 
 \textbf{Results table here:}
