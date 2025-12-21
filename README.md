@@ -18,7 +18,7 @@
 * batch8_pong_episode_rewards.npy - stored np.array for the y-axis of the learning visualisation for the model after n steps
 
 ### Group Contribution Form.
-* Group Contribution Form Template.docx - completed contribution form
+* Group Contribution Form Template RL.pdf - completed contribution form
 
 ## We used the following libraries in this project
 * OpenAI Gym/Farama Gymnasium (https://pypi.org/project/ale-py/) - for the Atari game environment, pre-processing wrappers and rendering
