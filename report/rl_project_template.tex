@@ -209,13 +209,13 @@ This provides a gradual shift from random behaviour to learned control.
 \subsection{Experience Replay}
 After the action is taken, the agent receives a reward and the next frame. The transition tuple $(s_t, a_t, r_t, s_{t+1}, \text{done})$ is appended to a replay buffer. During training batches, mini-batches of transitions are sampled uniform
 
-
+[Huber Loss Function (https://engage.bath.ac.uk/mod/page/view.php?id=302745) ]
 
 \section{Results}
 % A presentation of your results, showing how quickly and how well your agent(s) learn (i.e., improve their policies). Include informative baselines for comparison (e.g. the best possible performance, the performance of an average human, or the performance of an agent that selects actions randomly). (DH)
 
 
-Our agent managed an average score of $4.4$ with a standard deviation of $\pm7.2$ based on 36 samples (the minimum to converge to the normal under the central limit theorem). The is better then Best Linear Learning and Contigency (SARSA) algorithms reported in Mnih 2015 but below that of an experienced human and well below the DQN approach in the paper.
+Our agent managed an average score of $4.4$ with a standard deviation of $\pm7.2$ (based on 36 samples the minimum to converge to the normal under the central limit theorem). This is better than the Best Linear Learning (-19) and Contingency (SARSA) (-17.4) algorithms reported in Mnih 2015 but below that of an experienced human player (9.3) and well below the superhuman results of the DQN approach in the paper (19.9).
 
 \begin{center}
 \begin{tabular}{lr}
@@ -256,7 +256,7 @@ We tried a number of tweaks to hyper parameters:
 \begin{itemize}
     \item Introducing the AdamW optimiser in place of the Adam optimiser seemed to make little difference to the learning rate. We believe this is because the weight decay term would shrink rewards making the learning less sensitive to them.
     \item Replay Buffer Size 100,000, 1,000,000
-    \item Batch sizes higher than 32 slowed the system down with no appreciable benefit to learning. [WHY?]
+    \item Batch sizes higher than 32 (e.g. 64 or 128) slowed the system down with no appreciable benefit to learning. It may be that other hyper parameters e.g. learning rate or warm-up time should have been increased at the same time.
     \item Learning rate of 1e-3, 1e-4 and 1e-5 
     \item Huber loss vs MSE
     \item Epsilon decay 150,000, 500,000
@@ -267,7 +267,7 @@ We tried a number of tweaks to hyper parameters:
 
 \section{Future Work}
 % A discussion of potential future work you would complete if you had more time. (DH)
-We would have welcomed more time to explore other approaches to reinforcement learning and apply them to a broader set of Atari games. Implementing more sophisticated algorithms such as Double or Dueling DQN or adding Prioritised Experience Replay would be logical next steps. 
+We would have welcomed more time to explore other approaches to reinforcement learning and apply them to a broader set of Atari games. Implementing more sophisticated algorithms such as Double or Dueling DQN or adding Prioritised Experience Replay with the aim of attaining superhuman levels of skill would be the logical next step.
 
 One of the startling results from the Mnih et al, 2015 paper was the generality of the approach which allowed the same algorithm to be applied to many different games. Pong is one of the simpler games in the Arcade Learning Environment but still requires considerable computational resources to train which makes evaluating different approaches time consuming. Applying the agent to more challenging games such as Breakout would be interesting. Breakout requires many more episodes of training before the agent can acquire superhuman levels of play. 
 
@@ -275,17 +275,17 @@ Beyond that, games such as Montezuma's Revenge are hard exploration problems tha
 
 \section{Personal Experience}
 % A discussion of your personal experience with the project, such as difficulties or pleasant surprises you encountered while completing it. (DH)
-It was fascinating to see an agent develop the necessary skill to play a game from raw (albeit simplified) footage from the game environment. After \textbf{[X]} thousand steps, the agent would even win the occasional game. 
+It was fascinating to see an agent develop the necessary skill to play a game from raw (albeit simplified) footage from the game environment. After one million steps, the agent would win the occasional game. 
 
-We developed the agent using TensorFlow and Keras which were very helpful libraries for building core DQN algorithm and neural network. Training on a CPU was slow however and, recognising that improved performance would enable us to investigate more approaches for learning, significant time was spent trying to improve performance. 
+We developed the agent using TensorFlow and Keras which were very helpful libraries for building the core DQN algorithm and neural network. Training on a CPU was slow however and, recognising that improved performance would enable us to investigate more approaches for learning, significant time was spent trying to improve performance. 
 
-Simple profiling of the code showed that generating, preprocessing and storing each step of the environment was cheap, as was the mini-batch sampling. The vast majority of the time was spent calculating the loss and performing gradient descent. We therefore focused on whether that part of the code could be sped up by leveraging TensorFlow's graph execution approach.  
+Simple profiling of the code showed that generating, preprocessing and storing each step of the environment was relatively cheap, as was the mini-batch sampling. The vast majority of the time was spent calculating the loss and performing gradient descent. We therefore focused on whether that part of the code could be sped up by leveraging TensorFlow's graph execution approach.  
 
-Here we encountered some frustration.  When trying Keras on a local Nvidia GPU on Microsoft Windows (which required Windows Subsystem for Linux 2) where the model would not learn. Similar challenges were found in Google Colab and Mac OS. 
+Here we encountered some frustration.  Compatibility issues using Keras on a local Nvidia GPU on Microsoft Windows (which requires Windows Subsystem for Linux 2) proved challenging. Similar compatilibity issues were encountered for various versions of  TensorFlow libraries optimised for Google Colab and Mac OS. 
 
-A significant amount of time was also spent trying many combinations of hyperparameters in the hope of matching the performance of the DeepMind paper. \textbf{[WHY DID THE BEST RESULTS FOR US ARISE FROM DIFFERENT FIGURES TO THE DEEPMIND PAPER?]}
+A significant amount of time was also spent trying many combinations of hyper-parameters in the hope of matching the performance of the Mnih, 2015 paper. The hyper-parameters from the paper did not seem to help in our setting. We believe this is because the optimiser used in that paper (RMSProp) was different to the Adam and AdamW optimisers we explored.
 
-Working as a group was a positive experience overall although our group of four became a group of \textbf{[X]} because one member had to drop out of the course due to personal and work commitments. The remaining group was able to coordinate tasks efficiently and develop the project further.  
+Working as a group was a positive experience overall although our group of four became a group of three because one member had to drop out of the course due to personal and work commitments. The remaining group was able to coordinate tasks efficiently and develop the project effectively.  
 
 Overall, we think it would have been better to have established a stable group earlier in the unit. The workload could then have been shared more evenly. Nevertheless, it was extremely satisfying to see an agent learn from little more than simple sensory input and a reward. 
 
