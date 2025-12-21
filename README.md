@@ -1,11 +1,11 @@
 ## Graded Submission: RL Project
-* This project submission consists of five elements:
+* This project submission consists of five elements. To reproduce the results simply run the code in the Jupyter notebook referenced below.
 
 ### Project Report
 * BathProjectRL2025.pdf - The project write up covering the background, method and results
 
 ### Video Presentation
-* Presentation.mov - A short video presentation by the group of our project and results
+* This a link that has been uploaded via Echo 360
 
 ### Agent Video
 * RLProject2.mov - A two-minute video of our agent's learning
