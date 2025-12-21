@@ -12,7 +12,7 @@
 
 ### Source code and ancillary files
 * README.md - This file.
-* RLProject2025_VO.ipynb - A Jupyter notebook with the source code. Uncomment the pip install commands in the first code block to install the necessary libraries. 
+* RLProject2025.ipynb - A Jupyter notebook with the source code. Uncomment the pip install commands in the first code block to install the necessary libraries. 
 * batch8_pong_dqn (n steps).keras - model checkpoints that save the state of the model after n steps
 * batch8_pong_episode_end_steps.npy - stored np.array for the x-axis of the learning visualisation for the model after n steps
 * batch8_pong_episode_rewards.npy - stored np.array for the y-axis of the learning visualisation for the model after n steps
